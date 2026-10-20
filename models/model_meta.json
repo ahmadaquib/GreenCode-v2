@@ -1,0 +1,51 @@
+{
+  "feature_keys": [
+    "sloc",
+    "lloc",
+    "function_count",
+    "class_count",
+    "loop_count",
+    "max_loop_depth",
+    "nested_loop_count",
+    "conditional_count",
+    "try_except_count",
+    "list_comprehensions",
+    "io_operations",
+    "network_calls",
+    "heavy_math_imports",
+    "recursion_candidates",
+    "avg_complexity",
+    "max_complexity",
+    "total_complexity",
+    "halstead_volume",
+    "halstead_difficulty",
+    "halstead_effort",
+    "maintainability_index",
+    "computational_intensity"
+  ],
+  "n_features": 22,
+  "metrics": {
+    "n_samples": 10000,
+    "n_train": 8000,
+    "n_test": 2000,
+    "physics_only": {
+      "smape": 200.0,
+      "mae_joules": 10.964111
+    },
+    "hybrid_model": {
+      "train_smape": 66.16,
+      "test_smape": 68.35,
+      "train_mae_j": 2.645332,
+      "test_mae_j": 3.238441,
+      "train_r2": 0.9236,
+      "test_r2": 0.8681
+    },
+    "improvement": {
+      "smape_reduction_pct": 131.65,
+      "mae_reduction_j": 7.725671
+    }
+  },
+  "model_type": "Pipeline(StandardScaler + XGBRegressor)",
+  "target": "residual_joules",
+  "note": "Model predicts E_residual = E_true - E_physics. Hybrid = Physics + Residual."
+}
