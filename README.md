@@ -74,4 +74,4 @@ You can host this dashboard for free to share with the world:
 
 ---
 
-*Co-authored by Pavan & VCET Team for INDIACom.*
+*Co-authored by Aquib & Team for INDIACom.*

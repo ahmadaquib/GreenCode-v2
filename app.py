@@ -139,7 +139,7 @@ with st.sidebar:
                          help="Uses XGBoost model to correct physics-based estimation errors.")
 
     st.markdown("---")
-    st.markdown("Built by **Pavan** & VCET Team")
+    st.markdown("Built by **Aquib & Team**")
 
 
 # ─── Main Content: Single File Analysis ───────────────────────────────────────
@@ -189,7 +189,7 @@ if analysis_mode == "Single File Analysis":
                 key="code_file"
             )
             if uploaded_file is not None:
-                raw = uploaded_file.read()
+                raw = uploaded_file.getvalue() if hasattr(uploaded_file, "getvalue") else uploaded_file.read()
                 for enc in ("utf-8", "latin-1"):
                     try:
                         code_input = raw.decode(enc)
@@ -214,7 +214,7 @@ if analysis_mode == "Single File Analysis":
             )
             if uploaded_zip is not None:
                 try:
-                    zip_bytes = uploaded_zip.read()
+                    zip_bytes = uploaded_zip.getvalue() if hasattr(uploaded_zip, "getvalue") else uploaded_zip.read()
                     # Validate it's actually a ZIP
                     if not zipfile.is_zipfile(io.BytesIO(zip_bytes)):
                         upload_warning = "⚠️ The uploaded file is not a valid ZIP archive."
@@ -228,9 +228,14 @@ if analysis_mode == "Single File Analysis":
                             ".zip", ".tar", ".gz", ".bz2", ".xz", ".7z", ".rar",
                             ".pdf", ".doc", ".docx", ".xls", ".xlsx",
                             ".pyc", ".pyo", ".class",
-                            ".DS_Store", ".map",
+                            ".map",
                         }
-                        SKIP_DIRS = ("__MACOSX", "node_modules/", ".git/", ".venv/", "venv/", ".tox/")
+                        IGNORED_FILENAMES = {".ds_store", "thumbs.db", "desktop.ini"}
+                        SKIP_DIR_NAMES = {
+                            "__macosx", "node_modules", ".git", ".venv", "venv", ".tox",
+                            "__pycache__", ".pytest_cache", ".mypy_cache", ".idea", ".vscode",
+                            "build", "dist", ".next", ".nuxt", "target"
+                        }
 
                         parts = []
                         included = []
@@ -238,7 +243,19 @@ if analysis_mode == "Single File Analysis":
                         stage_times = {}
 
                         def _trunc(name, n=30):
-                            return name if len(name) <= n else name[:n-3] + "..."
+                            return name if len(name) <= n else name[:max(0, n-3)] + "..."
+
+                        def _is_skipped_entry(name):
+                            norm = name.replace("\\", "/").strip("/")
+                            parts = norm.split("/")
+                            # Check directory components
+                            if any(p.lower() in SKIP_DIR_NAMES for p in parts[:-1]):
+                                return True
+                            base = parts[-1].lower()
+                            # Skip macOS metadata files and system files
+                            if base.startswith("._") or base in IGNORED_FILENAMES:
+                                return True
+                            return False
 
                         # ── Stage 1: Extract files from ZIP ──────────────────
                         t_extract_start = time.perf_counter()
@@ -247,15 +264,17 @@ if analysis_mode == "Single File Analysis":
                                 all_names = sorted(
                                     n for n in zf.namelist()
                                     if not n.endswith("/")
-                                    and not any(n.startswith(d) for d in SKIP_DIRS)
+                                    and not n.endswith("\\")
+                                    and not _is_skipped_entry(n)
                                 )
                                 total_files = len(all_names)
                                 counter = st.empty()
 
                                 for idx, fname in enumerate(all_names, 1):
                                     counter.markdown(f"📄 Extracting **{idx}** / **{total_files}** — `{_trunc(fname)}`")
-                                    _, ext = os.path.splitext(fname.lower())
-                                    if ext in BINARY_EXTS:
+                                    base_name = os.path.basename(fname).lower()
+                                    _, ext = os.path.splitext(base_name)
+                                    if ext in BINARY_EXTS or base_name in IGNORED_FILENAMES:
                                         skipped.append((fname, "binary extension"))
                                         continue
                                     try:
@@ -355,9 +374,12 @@ if analysis_mode == "Single File Analysis":
                 result_container = {}
 
                 def _run_prediction():
-                    result_container['result'] = predict_and_compare(
-                        code_input, regions=[selected_region], instance=selected_instance
-                    )
+                    try:
+                        result_container['result'] = predict_and_compare(
+                            code_input, regions=[selected_region], instance=selected_instance
+                        )
+                    except Exception as exc:
+                        result_container['result'] = {'error': str(exc)}
 
                 t_pred_start = time.perf_counter()
                 pred_thread = threading.Thread(target=_run_prediction)
@@ -373,7 +395,7 @@ if analysis_mode == "Single File Analysis":
                 timing['total'] = timing['extraction'] + timing['analysis'] + timing['inference']
                 timer_display.empty()
 
-                result = result_container['result']
+                result = result_container.get('result', {'error': 'Prediction did not complete successfully.'})
                 result['_timing'] = timing
                 st.session_state.last_result = result
             else:
