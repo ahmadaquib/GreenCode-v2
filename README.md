@@ -32,8 +32,8 @@ Ensure you have Python 3.11+ installed.
 Clone the repository and install the dependencies:
 
 ```bash
-git clone https://github.com/yourusername/greencode.git
-cd greencode
+git clone https://github.com/ahmadaquib/GreenCode-v2.git
+cd GreenCode-v2
 python -m venv venv
 source venv/bin/activate  # Windows: .\venv\Scripts\activate
 pip install -r requirements.txt
@@ -71,6 +71,13 @@ You can host this dashboard for free to share with the world:
 2. Create a new Space, choose **Streamlit** as the SDK.
 3. Upload the contents of this repository.
 4. HuggingFace will automatically install `requirements.txt` and launch `app.py`.
+
+---
+
+## 📄 Paper
+
+**GreenCode: A Hybrid Model for Accurate and Efficient Carbon and Cost Prediction** (IEEE, 2026)
+Read it on [IEEE Xplore](https://ieeexplore.ieee.org/document/11525639).
 
 ---
 
